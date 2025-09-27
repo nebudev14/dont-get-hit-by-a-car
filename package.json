@@ -1,0 +1,26 @@
+{
+  "name": "mentraos-cloud-example-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "bun run dist/index.js",
+    "dev": "bun --watch server/even-realities/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@mentra/sdk": "latest",
+    "express": "^4.21.2",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^24.5.2",
+    "@types/ws": "^8.18.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
+  }
+}
