@@ -4,8 +4,6 @@ from typing import Optional
 import asyncio, threading, queue
 
 import numpy as np
-import cv2
-
 from aiortc import (
     RTCPeerConnection, RTCSessionDescription,
     RTCConfiguration, RTCIceServer
