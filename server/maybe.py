@@ -1,7 +1,6 @@
 # server/maybe.py  ← minimal correct header
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles  # import this
 
 app = FastAPI()                              # define app FIRST
 
@@ -52,7 +51,8 @@ def sender_page():
     const log = (...a) => (document.getElementById('log').textContent += a.join(' ') + "\\n");
 
     async function start() {
-      pc = new RTCPeerConnection({ iceServers: [] }); // add TURN for internet later
+      pc = new RTCPeerConnection({
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]}); // add TURN for internet later
       pc.oniceconnectionstatechange = () => log("ICE:", pc.iceConnectionState);
 
       stream = await navigator.mediaDevices.getUserMedia({
