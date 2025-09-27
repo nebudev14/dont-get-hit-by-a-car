@@ -24,8 +24,8 @@ async def checkphone(request: Request, call_next):
     return response
 
 
-@app.post("/camera/stream", status_code=status.HTTP_200_OK)
-async def camera_stream(request: Request):
+# @app.post("/camera/stream", status_code=status.HTTP_200_OK)
+# async def camera_stream(request: Request):
     
     
 
