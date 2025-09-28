@@ -13,6 +13,7 @@ const sessions = new Map<string, AppSession>();
 
 app.post("/receive", (req, res) => {
   const text = req.body.name; // expecting { "text": "..." }
+  console.log("Received HTTP text:", text);
 
   for (const [id, session] of sessions.entries()) {
     session.logger.info(`📩 Received HTTP text for session ${id}: ${text}`);
