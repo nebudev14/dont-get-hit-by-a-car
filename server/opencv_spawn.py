@@ -1,8 +1,7 @@
-# viewer.py
 import argparse, sys, time, asyncio
 import cv2, numpy as np
 import requests
-import websockets  # pip install websockets
+import websockets 
 
 def try_videocap(url, title):
     print(f"[viewer] trying VideoCapture on {url}")
@@ -47,7 +46,7 @@ async def run_ws(url, title):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--url", required=True, help="Use ws:// or wss:// for WebSocket, or http(s):// for MJPEG")
+    ap.add_argument("--url", required=True)
     ap.add_argument("--title", default="WebRTC Camera Stream")
     args = ap.parse_args()
 

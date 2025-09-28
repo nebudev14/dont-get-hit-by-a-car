@@ -8,7 +8,6 @@ import asyncio, cv2, time, os
 app = FastAPI()
 PCS = set()
 
-# Tunables (env overrides): smaller frames + lower JPEG quality = less latency over the internet
 OUT_MAX_W = int(os.environ.get("OUT_MAX_W", "640"))
 OUT_MAX_H = int(os.environ.get("OUT_MAX_H", "360"))
 JPG_QUALITY = int(os.environ.get("JPG_QUALITY", "70"))
@@ -98,39 +97,6 @@ async def camera_stream(body: OfferPayload):
 
 BOUNDARY = "frameboundary"
 
-@app.get("/mjpeg")
-async def mjpeg():
-    q = await HUB.subscribe()
-    print("[MJPEG] client connected")
-    async def gen():
-        yield f"--{BOUNDARY}\r\n".encode("ascii")
-        try:
-            while True:
-                try:
-                    jpg = await asyncio.wait_for(q.get(), timeout=0.8)
-                except asyncio.TimeoutError:
-                    jpg = HUB.latest_jpg
-                    if jpg is None:
-                        yield b""
-                        continue
-                part = (
-                    f"Content-Type: image/jpeg\r\n"
-                    f"Content-Length: {len(jpg)}\r\n\r\n"
-                ).encode("ascii") + jpg + b"\r\n" + f"--{BOUNDARY}\r\n".encode("ascii")
-                yield part
-        finally:
-            print("[MJPEG] client disconnected")
-            await HUB.unsubscribe(q)
-    headers = {
-        "Age": "0",
-        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-        "Pragma": "no-cache",
-        "Content-Type": f"multipart/x-mixed-replace; boundary={BOUNDARY}",
-        "Connection": "keep-alive",
-    }
-    return StreamingResponse(gen(), headers=headers)
-
-# NEW: low-latency WebSocket transport sending raw JPEG frames
 @app.websocket("/ws")
 async def ws_stream(ws: WebSocket):
     await ws.accept()
@@ -201,7 +167,7 @@ def index():
       const res = await fetch("/camera/stream", { method:"POST", headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type }) });
       const ans = await res.json(); await pc.setRemoteDescription(new RTCSessionDescription(ans));
-      log("Started. Use /ws or /mjpeg from viewers.");
+      log("Started. Use /ws from viewers.");
     }
     function stop(){ if(pc){pc.close(); pc=null;} if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null;} log("Stopped."); }
     document.getElementById('start').onclick = start; document.getElementById('stop').onclick = stop;
