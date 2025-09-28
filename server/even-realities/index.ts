@@ -12,14 +12,19 @@ app.get("/receive", (req, res) => {
   res.json({ status: "success", received: req.body});
 })
 
-app.listen(8080, () => {
-  console.log("server running on 8080")
+app.listen(3000, () => {
+  console.log("server running on 3000")
 })
+
+
+
+
+
 
 
 // Load configuration from environment variables
 const PACKAGE_NAME = process.env.PACKAGE_NAME || "com.example.myfirstmentraosapp"
-const PORT = parseInt(process.env.PORT || "8080")
+const PORT = parseInt(process.env.PORT || "3000")
 const MENTRAOS_API_KEY = process.env.MENTRAOS_API_KEY
 
 if (!MENTRAOS_API_KEY) {
