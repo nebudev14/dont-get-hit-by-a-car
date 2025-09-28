@@ -100,7 +100,6 @@ while cap.isOpened():
         cv2.putText(frame, "APPROACH WARNING!", (40, 70),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0,0,255), 3)
 
-    # Resize display window (so it fits screen)
     scale = 0.5
     disp = cv2.resize(frame, (int(W * scale), int(H * scale)))
     cv2.imshow("rear-guard", disp)
