@@ -34,10 +34,12 @@ wss.on("connection", (ws) => {
       const data = JSON.parse(msg.toString());
       const { ts, risk, direction } = data;
 
-      console.log("Received WS data:", data);
+      // console.log("Received WS data:", data);
 
       for (const [id, session] of sessions.entries()) {
         const text = `⚠️ Risk: ${risk}\n➡️ Direction: ${direction}`;
+        console.log(text)
+        session.logger.info(text)
         session.logger.info(`📩 WS update for session ${id}: ${text}`);
         session.layouts.showTextWall(text);
       }
@@ -62,6 +64,7 @@ const MENTRAOS_API_KEY = process.env.MENTRAOS_API_KEY!;
 class MyMentraOSApp extends AppServer {
   protected async onSession(session: AppSession, sessionId: string, userId: string) {
     session.logger.info(`New session ${sessionId} for user ${userId}`);
+    console.log("New session", sessionId, userId);
 
     sessions.set(sessionId, session);
 

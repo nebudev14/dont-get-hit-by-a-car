@@ -39,7 +39,7 @@ model = YOLO(MODEL_DIR)
 RISK_LEVEL = {"SAFE": 0, "CAUTION": 1, "DANGER": 2}
 RISK_COLOR = {
     "SAFE":    (0, 200, 0),
-    "CAUTION": (0, 165, 255),--host 0.0.0.0 --port 8000
+    "CAUTION": (0, 165, 255),
     "DANGER":  (0, 0, 255),
 }
 
