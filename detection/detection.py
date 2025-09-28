@@ -11,12 +11,8 @@ IOU         = 0.5
 WATCH       = {0,2,3,5,7}   # person, car, motorcycle, bus, truck
 
 CENTER_BAND = 0.35
-REL_CAUTION = 0.28
-REL_DANGER  = 0.35
-DIST_CAUTION_M = 10.0
-DIST_DANGER_M  = 6.0
-
-REAL_H = {0:1.70, 2:1.40, 3:1.30, 5:3.00, 7:3.00}
+REL_CAUTION = 0.10
+REL_DANGER  = 0.20  # acceptable
 
 # ----------------------------
 # Load YOLO model
@@ -27,7 +23,7 @@ model = YOLO(MODEL_DIR)
 last_heights = {}
 SHRINK_RATIO = 0.2   # if height shrinks >50% vs last frame, ignore box
 
-cap = cv2.VideoCapture("rearend.mp4")
+cap = cv2.VideoCapture("rearen2.mp4")
 frame_count = 0
 
 while cap.isOpened():
@@ -69,13 +65,23 @@ while cap.isOpened():
         # Update last seen height for this class
         last_heights[cls] = h
 
-        cx   = (x1 + x2) * 0.5 / W
+        cx = (x1 + x2) * 0.5 / W
         rel_closeness = h / float(H)
 
-        # Risk logic (simplified)
-        if rel_closeness >= REL_DANGER and abs(cx-0.5) <= CENTER_BAND:
+        # ----------------------------
+        # Direction (3 vertical zones)
+        # ----------------------------
+        if cx < 2/5:
+            direction = "LEFT"
+        elif cx < 3/5:
+            direction = "CENTER"
+        else:
+            direction = "RIGHT"
+
+        # Risk logic
+        if rel_closeness >= REL_DANGER and abs(cx - 0.5) <= CENTER_BAND:
             risk, color = "DANGER", (0, 0, 255); alert = True
-        elif rel_closeness >= REL_CAUTION and abs(cx-0.5) <= CENTER_BAND:
+        elif rel_closeness >= REL_CAUTION and abs(cx - 0.5) <= CENTER_BAND:
             risk, color = "CAUTION", (0, 165, 255)
         else:
             risk, color = "SAFE", (0, 200, 0)
@@ -85,10 +91,11 @@ while cap.isOpened():
         cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
         frame = cv2.addWeighted(overlay, 0.25, frame, 0.75, 0)
 
-        # Draw bounding box and label
+        # Draw bounding box and label (with direction)
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
         cls_name = model.names[cls] if hasattr(model, "names") else str(cls)
-        cv2.putText(frame, f"{cls_name} {risk}", (x1, max(y1 - 8, 15)),
+        cv2.putText(frame, f"{cls_name} {risk} {direction}",
+                    (x1, max(y1 - 8, 15)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
 
     # FPS
@@ -100,10 +107,9 @@ while cap.isOpened():
         cv2.putText(frame, "APPROACH WARNING!", (40, 70),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0,0,255), 3)
 
-    # Resize display window (so it fits screen)
-    scale = 0.5
-    disp = cv2.resize(frame, (int(W * scale), int(H * scale)))
-    cv2.imshow("rear-guard", disp)
+    # Show in resizable window
+    cv2.namedWindow("rear-guard", cv2.WINDOW_NORMAL)
+    cv2.imshow("rear-guard", frame)
 
     # Press q to exit early
     if cv2.waitKey(1) & 0xFF == ord("q"):
