@@ -1,20 +1,19 @@
 import { AppServer, AppSession } from "@mentra/sdk";
 import express from "express";
-import fs from "fs";
+import http from "http";
+import { WebSocketServer } from "ws";
 
-// -------------------
-// Express HTTP server
-// -------------------
+
 const app = express();
 app.use(express.json());
 
-// Keep a map of active sessions so we can update them from HTTP
+const server = http.createServer(app);
+
 const sessions = new Map<string, AppSession>();
 
 app.post("/receive", (req, res) => {
-  const text  = req.body.name; // expecting { "text": "..." }
+  const text = req.body.name; // expecting { "text": "..." }
 
-  // Push to all active sessions (or pick one)
   for (const [id, session] of sessions.entries()) {
     session.logger.info(`📩 Received HTTP text for session ${id}: ${text}`);
     session.layouts.showTextWall(text);
@@ -23,13 +22,38 @@ app.post("/receive", (req, res) => {
   res.json({ status: "ok", received: text });
 });
 
-app.listen(3000, () => {
-  console.log("HTTP server listening on :3000");
+
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws) => {
+  console.log("🌐 WebSocket client connected");
+
+  ws.on("message", (msg) => {
+    try {
+      const data = JSON.parse(msg.toString());
+      const { ts, risk, direction } = data;
+
+      console.log("Received WS data:", data);
+
+      for (const [id, session] of sessions.entries()) {
+        const text = `⚠️ Risk: ${risk}\n➡️ Direction: ${direction}`;
+        session.logger.info(`📩 WS update for session ${id}: ${text}`);
+        session.layouts.showTextWall(text);
+      }
+    } catch (err) {
+      console.error("Invalid WS message:", err);
+    }
+  });
+
+  ws.on("close", () => {
+    console.log("❌ WebSocket client disconnected");
+  });
 });
 
-// -------------------
-// MentraOS App Server
-// -------------------
+server.listen(3000, () => {
+  console.log("HTTP + WS server listening on :3000");
+});
+
 const PACKAGE_NAME = process.env.PACKAGE_NAME || "com.example.myfirstmentraosapp";
 const PORT = parseInt(process.env.PORT || "8080");
 const MENTRAOS_API_KEY = process.env.MENTRAOS_API_KEY!;
@@ -38,13 +62,10 @@ class MyMentraOSApp extends AppServer {
   protected async onSession(session: AppSession, sessionId: string, userId: string) {
     session.logger.info(`New session ${sessionId} for user ${userId}`);
 
-    // Track the session
     sessions.set(sessionId, session);
 
-    // Show a default screen
     await session.layouts.showTextWall("👋 Hello from MentraOS!");
 
-    // Cleanup on disconnect
     session.events.onDisconnected(() => {
       sessions.delete(sessionId);
       session.logger.info(`Session ${sessionId} disconnected.`);
@@ -56,6 +77,8 @@ new MyMentraOSApp({
   packageName: PACKAGE_NAME,
   apiKey: MENTRAOS_API_KEY,
   port: PORT,
-}).start().catch((err) => {
-  console.error("Failed to start Mentra app:", err);
-});
+})
+  .start()
+  .catch((err) => {
+    console.error("Failed to start Mentra app:", err);
+  });
