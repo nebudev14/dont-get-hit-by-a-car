@@ -34,11 +34,12 @@ wss.on("connection", (ws) => {
       const data = JSON.parse(msg.toString());
       const { ts, risk, direction } = data;
 
-      // console.log("Received WS data:", data);
+      console.log("Received WS data:", data);
+      
+      const text = `⚠️ Risk: ${risk}\n➡️ Direction: ${direction}`;
 
       for (const [id, session] of sessions.entries()) {
-        const text = `⚠️ Risk: ${risk}\n➡️ Direction: ${direction}`;
-        console.log(text)
+
         session.logger.info(text)
         session.logger.info(`📩 WS update for session ${id}: ${text}`);
         session.layouts.showTextWall(text);
