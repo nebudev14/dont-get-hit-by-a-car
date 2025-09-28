@@ -3,7 +3,7 @@ import express from "express";
 import http from "http";
 import { WebSocketServer } from "ws";
 
-
+const fs = require('fs');
 const app = express();
 app.use(express.json());
 
@@ -38,11 +38,30 @@ wss.on("connection", (ws) => {
       
       const text = `⚠️ Risk: ${risk}\n➡️ Direction: ${direction}`;
 
+
+
       for (const [id, session] of sessions.entries()) {
 
         session.logger.info(text)
         session.logger.info(`📩 WS update for session ${id}: ${text}`);
-        session.layouts.showTextWall(text);
+        // session.layouts.showTextWall(text);
+        if (risk == "DANGER" || risk == "CAUTION") {
+          if (direction == "LEFT") {
+            const imageBuffer = fs.readFileSync('./LEFT_BMP.bmp');
+            const base64data = imageBuffer.toString('base64');
+            session.layouts.showBitmapView(base64data);
+          }
+          if (direction == "RIGHT") {
+            const imageBuffer = fs.readFileSync('./RIGHT_BMP.bmp');
+            const base64data = imageBuffer.toString('base64');
+            session.layouts.showBitmapView(base64data);
+          }
+          if (direction == "CENTER") {
+            const imageBuffer = fs.readFileSync('./CENTER_BMP.bmp');
+            const base64data = imageBuffer.toString('base64');
+            session.layouts.showBitmapView(base64data);
+          }
+        }
       }
     } catch (err) {
       console.error("Invalid WS message:", err);
