@@ -2,8 +2,11 @@ import argparse, sys, time, asyncio, math
 import cv2, numpy as np
 import requests
 import websockets
+import json
 from ultralytics import YOLO
 
+
+changed = asyncio.Event()
 # ----------------------------
 # Detection Config
 # ----------------------------
@@ -66,13 +69,32 @@ def process_detection(frame):
         cx   = (x1 + x2) * 0.5 / W
         rel_closeness = h / float(H)
 
+
+
+         # ----------------------------
+        # Direction (3 vertical zones)
+        # ----------------------------
+        if cx < 2/5:
+            direction = "LEFT"
+            changed.set()
+
+        elif cx < 3/5:
+            direction = "CENTER"
+            changed.set()
+        else:
+            direction = "RIGHT
+            changed.set()
+
         # Risk logic (simplified)
         if rel_closeness >= REL_DANGER and abs(cx-0.5) <= CENTER_BAND:
             risk, color = "DANGER", (0, 0, 255); alert = True
+            changed.set()
         elif rel_closeness >= REL_CAUTION and abs(cx-0.5) <= CENTER_BAND:
             risk, color = "CAUTION", (0, 165, 255)
+            changed.set()
         else:
             risk, color = "SAFE", (0, 200, 0)
+            changed.set()
 
         # Draw translucent overlay for the box
         overlay = frame.copy()
@@ -82,7 +104,8 @@ def process_detection(frame):
         # Draw bounding box and label
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
         cls_name = model.names[cls] if hasattr(model, "names") else str(cls)
-        cv2.putText(frame, f"{cls_name} {risk}", (x1, max(y1 - 8, 15)),
+        cv2.putText(frame, f"{cls_name} {risk}", {direction}", 
+         (x1, max(y1 - 8, 15)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
 
     # FPS
@@ -172,6 +195,23 @@ def main():
         ok = try_videocap(args.url, args.title, enable_detection=not args.no_detection)
         if not ok:
             print("[viewer] fallback to parser disabled on purpose; prefer WS for low latency.", file=sys.stderr)
+
+
+    async def sender():
+    url = "ws://127.0.0.1:8000/stream"  # your server WebSocket URL
+    async with websockets.connect(url) as ws:
+        while True:
+            await changed.wait()
+            changed.clear()
+            data = {"ts": time.time(), "risk": risk, "direction": direction}
+            await ws.send(json.dumps(data))   
+            print("sent:", data)
+
+asyncio.run(sender())
+
+
+    
+
 
 if __name__ == "__main__":
     main()
