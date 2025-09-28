@@ -11,6 +11,12 @@ const server = http.createServer(app);
 
 const sessions = new Map<string, AppSession>();
 
+const bitmaps = {
+  LEFT: fs.readFileSync('./LEFT_BMP.bmp').toString('base64'),
+  RIGHT: fs.readFileSync('./RIGHT_BMP.bmp').toString('base64'),
+  CENTER: fs.readFileSync('./CENTER_BMP.bmp').toString('base64'),
+};
+
 app.post("/receive", (req, res) => {
   const text = req.body.name; // expecting { "text": "..." }
   console.log("Received HTTP text:", text);
@@ -45,21 +51,15 @@ wss.on("connection", (ws) => {
         session.logger.info(text)
         session.logger.info(`📩 WS update for session ${id}: ${text}`);
         // session.layouts.showTextWall(text);
-        if (risk == "DANGER" || risk == "CAUTION") {
-          if (direction == "LEFT") {
-            const imageBuffer = fs.readFileSync('./LEFT_BMP.bmp');
-            const base64data = imageBuffer.toString('base64');
-            session.layouts.showBitmapView(base64data);
+        if (risk === "DANGER" || risk === "CAUTION") {
+          if (direction === "LEFT") {
+            session.layouts.showBitmapView(bitmaps.LEFT);
           }
-          if (direction == "RIGHT") {
-            const imageBuffer = fs.readFileSync('./RIGHT_BMP.bmp');
-            const base64data = imageBuffer.toString('base64');
-            session.layouts.showBitmapView(base64data);
+          if (direction === "RIGHT") {
+            session.layouts.showBitmapView(bitmaps.RIGHT);
           }
-          if (direction == "CENTER") {
-            const imageBuffer = fs.readFileSync('./CENTER_BMP.bmp');
-            const base64data = imageBuffer.toString('base64');
-            session.layouts.showBitmapView(base64data);
+          if (direction === "CENTER") {
+            session.layouts.showBitmapView(bitmaps.CENTER);
           }
         }
       }
